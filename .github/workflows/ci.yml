@@ -14,10 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.22.0'
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12.13'
-      - run: python -m unittest discover -s tests -v
+          version: '0.11.18'
+      - run: uv run --no-project --python 3.12.13 python -m unittest discover -s tests -v
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.4'

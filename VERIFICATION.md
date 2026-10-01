@@ -24,6 +24,8 @@ Review also repaired two concrete rerun hazards: replacing credentials for a ret
 
 ## Platform and deployment limits
 
-Native macOS arm64 application tests and the complete local Linux-arm64-container Kubernetes workflow were actually executed. Windows/macOS/Linux native jobs and a Linux-amd64 Kubernetes job are configured in `.github/workflows/ci.yml`; their actual run result must be inspected after publication. A Linux CI container job does **not** verify Docker Desktop/WSL2 on a Windows desktop. Windows local Kubernetes setup, macOS Intel, Windows ARM64 and Civo deployment have not been tested here.
+Native macOS arm64 application tests and the complete local Linux-arm64-container Kubernetes workflow were actually executed. The first [hosted CI run](https://github.com/KrishnaVarun02/kubernetes-container-deployment/actions/runs/36821003308) passed both Linux native tests and the complete Linux-amd64 Kubernetes rollout/persistence/cleanup job. Windows and macOS stopped during Python provisioning because `actions/setup-python` lacked Python 3.12.13 distributions for those runners. Native CI now uses pinned uv 0.11.18 to obtain Python 3.12.13 consistently; the replacement run must be inspected after this fix is pushed.
+
+A Linux CI container job does **not** verify Docker Desktop/WSL2 on a Windows desktop. Windows local Kubernetes setup, macOS Intel, Windows ARM64 and Civo deployment have not been tested here.
 
 Civo configuration is supplied separately in `docs/CIVO.md` and `scripts/cloud.py`; no cloud infrastructure was provisioned, no DNS or TLS setup performed, and no cloud charges incurred.
