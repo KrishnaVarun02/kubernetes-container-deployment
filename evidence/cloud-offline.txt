@@ -1,0 +1,25 @@
+2026-10-01 — offline Civo workflow review
+Host: macOS 26.6.2 arm64. Python: isolated CPython 3.12.13 selected by uv.
+
+Command: python -m unittest discover -s tests -v
+Result: Ran 10 tests in 0.013s; OK.
+Five database Secret preservation/recovery tests and five cloud workflow tests.
+Cloud tests mock every kubectl call and initialize_secret operation:
+  explicit kubeconfig and context used for every cluster action;
+  registry/tag/hostname validation fails before cluster access;
+  public/private image manifest generation and namespaced Secret type;
+  database image and local manifest files remain unchanged;
+  existing-tag application images restart and finish rollout after PostgreSQL.
+
+Command (Helm cache/config/data redirected to temporary review directories):
+helm template traefik traefik --repo https://traefik.github.io/charts --version 35.0.0 --namespace traefik --include-crds --kube-version 1.32.5
+Result: exited 0; rendered locally, no Kubernetes API access.
+Inspected rendered content:
+  ingressroutes.traefik.io / middlewares.traefik.io CRDs
+  image: docker.io/traefik:v3.3.5
+  --entryPoints.web.address=:8000/tcp
+  --providers.kubernetescrd
+  Service type: LoadBalancer
+
+Cloud workflow deployment, GHCR authentication/push, DNS and TLS remain untested.
+No cloud account resources created or modified; no cloud charges incurred.
