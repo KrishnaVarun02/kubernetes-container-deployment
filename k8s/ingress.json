@@ -1,0 +1,77 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "name": "strip-api-prefixes",
+        "namespace": "tutorial"
+      },
+      "spec": {
+        "stripPrefix": {
+          "prefixes": [
+            "/api/node",
+            "/api/golang"
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "primary",
+        "namespace": "tutorial"
+      },
+      "spec": {
+        "entryPoints": [
+          "web"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "PathPrefix(`/`)",
+            "services": [
+              {
+                "name": "client-react-nginx",
+                "port": 8080
+              }
+            ]
+          },
+          {
+            "kind": "Rule",
+            "match": "PathPrefix(`/api/node`)",
+            "services": [
+              {
+                "name": "api-node",
+                "port": 3000
+              }
+            ],
+            "middlewares": [
+              {
+                "name": "strip-api-prefixes"
+              }
+            ]
+          },
+          {
+            "kind": "Rule",
+            "match": "PathPrefix(`/api/golang`)",
+            "services": [
+              {
+                "name": "api-golang",
+                "port": 8080
+              }
+            ],
+            "middlewares": [
+              {
+                "name": "strip-api-prefixes"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

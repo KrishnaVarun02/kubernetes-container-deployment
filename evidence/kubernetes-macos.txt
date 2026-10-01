@@ -1,0 +1,32 @@
+macOS 26.6.2 arm64; Python 3.12.13 isolated environment; kubectl 1.32.5; k3d 5.8.3; K3s 1.32.5 Linux arm64
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial exec postgres-0 -- psql -U postgres -v ON_ERROR_STOP=1 -c CREATE TABLE IF NOT EXISTS verification (id integer PRIMARY KEY, value text); INSERT INTO verification VALUES (1, 'survives-restart') ON CONFLICT (id) DO UPDATE SET value=EXCLUDED.value;
+CREATE TABLE
+INSERT 0 1
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial get pod postgres-0 -o json
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial delete pod postgres-0
+pod "postgres-0" deleted
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial get pod postgres-0 --ignore-not-found -o json
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial get pod postgres-0 --ignore-not-found -o json
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial exec postgres-0 -- psql -U postgres -tAc SELECT value FROM verification WHERE id=1
+{"api": "golang", "now": "2026-10-01T05:38:21.199669Z"}
+{"api": "node", "now": "2026-10-01T05:38:21.206Z"}
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial exec postgres-0 -- psql -U postgres -c SELECT NOW();
+              now              
+-------------------------------
+ 2026-10-01 05:38:21.281852+00
+(1 row)
+
++ kubectl --kubeconfig /.local/kubeconfig.yaml -n tutorial get pods,pvc,ingressroutes
+NAME                                      READY   STATUS    RESTARTS   AGE
+pod/api-golang-7d74b8f6c9-8d54n           1/1     Running   0          56s
+pod/api-node-8557755845-95qs5             1/1     Running   0          58s
+pod/client-react-nginx-795b769b66-bxpnk   1/1     Running   0          55s
+pod/postgres-0                            1/1     Running   0          2s
+
+NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/data-postgres-0   Bound    pvc-f33d6a76-ad42-497d-b06c-142a1878a55e   1Gi        RWO            local-path     <unset>                 6m20s
+
+NAME                              AGE
+ingressroute.traefik.io/primary   54s
+PASS: both APIs return current PostgreSQL timestamps through ingress; React HTML accessible.
+PASS: committed data survived PostgreSQL pod replacement.

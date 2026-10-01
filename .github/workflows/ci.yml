@@ -1,0 +1,58 @@
+name: Application and Kubernetes verification
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.13'
+      - run: python -m unittest discover -s tests -v
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.4'
+          cache-dependency-path: api-golang/go.sum
+      - run: npm ci
+        working-directory: api-node
+      - run: npm test
+        working-directory: api-node
+      - run: go test ./...
+        working-directory: api-golang
+      - run: npm ci
+        working-directory: client-react
+      - run: npm test
+        working-directory: client-react
+      - run: npm run build
+        working-directory: client-react
+  kubernetes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned k3d
+        run: |
+          curl -fsSL https://github.com/k3d-io/k3d/releases/download/v5.8.3/k3d-linux-amd64 -o /tmp/k3d
+          chmod +x /tmp/k3d
+          sudo mv /tmp/k3d /usr/local/bin/k3d
+          curl -fsSL https://dl.k8s.io/release/v1.32.5/bin/linux/amd64/kubectl -o /tmp/kubectl
+          chmod +x /tmp/kubectl
+          sudo mv /tmp/kubectl /usr/local/bin/kubectl
+      - run: python scripts/local.py up
+      - run: python scripts/local.py persistence
+      - if: failure()
+        run: kubectl --kubeconfig .local/kubeconfig.yaml -n tutorial get pods,events
+      - if: always()
+        run: python scripts/local.py down
